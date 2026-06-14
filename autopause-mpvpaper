@@ -1,0 +1,26 @@
+#!/bin/bash
+
+MPV_SOCKET="/tmp/mpv-socket-All"
+HYPR_SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+
+send_mpv() {
+    echo "$1" | socat - "$MPV_SOCKET" 2>/dev/null
+}
+
+while [[ ! -S "$HYPR_SOCKET" ]]; do
+    sleep 0.5
+done
+
+while true; do
+    while IFS= read -r line; do
+        case "$line" in
+            "fullscreen>>1")
+                send_mpv '{"command": ["set_property", "pause", true]}'
+                ;;
+            "fullscreen>>0")
+                send_mpv '{"command": ["set_property", "pause", false]}'
+                ;;
+        esac
+    done < <(socat -u "UNIX-CONNECT:$HYPR_SOCKET" STDOUT 2>/dev/null)
+    sleep 1
+done
